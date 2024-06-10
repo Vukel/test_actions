@@ -22,4 +22,4 @@ jobs:
           cat metrics.txt >> report.md
           
           # Send the report as a comment on the PR
-          cml-send-comment --file report.md
+          cml-send-comment report.md --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
