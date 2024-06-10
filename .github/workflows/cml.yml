@@ -2,20 +2,24 @@ name: test_actions
 on: [push]
 jobs:
   run:
-    runs-on: [ubuntu-latest]
-    container: docker://dvcorg/cml-py3:latest
+    runs-on: ubuntu-latest
+    container:
+      image: docker://dvcorg/cml-py3:latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: 'Train my model'
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
         run: |
-
-          # Your ML workflow goes here
+          # Install required dependencies
           pip install -r requirements.txt
+          
+          # Run your ML training script
           python model.py
-
+          
+          # Create a report with model metrics
           echo "## Model Metrics" > report.md
           cat metrics.txt >> report.md
-
-          cml-send-comment report.md
+          
+          # Send the report as a comment on the PR
+          cml-send-comment --file report.md
