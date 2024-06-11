@@ -1,25 +1,35 @@
-name: test_actions
-on: [push]
+name: ML Workflow
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+  
+permissions: write-all
+
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
-    container:
-      image: docker://dvcorg/cml-py3:latest
     steps:
       - uses: actions/checkout@v3
-      - name: 'Train my model'
+        with:
+          lfs: true
+      - uses: iterative/setup-cml@v2
+      - name: Install Packages
+        run: pip install --upgrade pip && pip install -r requirements.txt
+      - name: Format
+        run: black *.py
+      - name: Train
+        run: python train.py
+      - name: Evaluation
         env:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Install required dependencies
-          pip install -r requirements.txt
-          
-          # Run your ML training script
-          python model.py
-          
-          # Create a report with model metrics
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: | 
           echo "## Model Metrics" > report.md
           cat metrics.txt >> report.md
-          
-          # Send the report as a comment on the PR
-          cml-send-comment report.md --repo ${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
+            
+          echo '## Confusion Matrix Plot' >> report.md
+          echo '![Confusion Matrix](model_results.png)' >> report.md
+
+          cml comment create report.md
